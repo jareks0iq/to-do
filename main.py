@@ -1,24 +1,33 @@
 from uuid import uuid4
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 app = FastAPI()
 
-class BookCreate(BaseModel):
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+)
+
+class TaskSchema(BaseModel):
     id: str
     title: str
+    completed: bool
 
-class BookAdd(BaseModel):
+class TaskCreateSchema(BaseModel):
     title: str
 
-book: list[BookCreate] = []
-@app.get("/")
-def get_book():
-    return {"message": f"Моя любимая книга: {book[0].title}"}
+tasks: list[TaskSchema] = []
+@app.get("/tasks")
+def get_tasks() -> list[TaskSchema]:
+    return tasks
 
-@app.post("/add_book")
-def add_book(payload: BookAdd) -> BookCreate:
-    new_book = BookCreate(id=str(uuid4()), title=payload.title)
-    book.append(new_book)
-    return new_book
+@app.post("/tasks")
+def create_task(payload: TaskCreateSchema) -> TaskSchema:
+    new_task = TaskSchema(id=str(uuid4()), title=payload.title, completed=False)
+
+    tasks.append(new_task)
+    return new_task
